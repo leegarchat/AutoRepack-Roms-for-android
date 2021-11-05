@@ -1,0 +1,1 @@
+Extract payload.bin from the rom file into /sdcard/ and execute repack.sh script with root. MT Manager is recommended.

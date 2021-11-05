@@ -1,7 +1,8 @@
 #!/bin/sh
+path=$1
 
-fsqcom="/cache/etc/fstab.qcom"
-fssm8250="/cache/etc/fstab.sm8250"
+fsqcom=$path"etc/fstab.qcom"
+fssm8250=$path"etc/fstab.sm8250"
 
 start(){
     sed -i 's|,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+wrappedkey_v0||' $fstabOneExt

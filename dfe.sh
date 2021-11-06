@@ -22,18 +22,18 @@ then
     start
     fstabOneExt="$fssm8250"
     start
-    echo -e "\e[1;31m fstab.qcom and fstab.sm8250 have been succesfully patched for decryption.\e[0m"
+    echo -e "\e[1;32m fstab.qcom and fstab.sm8250 have been succesfully patched for decryption.\e[0m"
 elif [[ -f $fssm8250 ]]
 then
     fstabOneExt="$fssm8250"
     start
-    echo -e "\e[1;31m fstab.sm8250 has been succesfully patched for decryption.\e[0m"
+    echo -e "\e[1;32m fstab.sm8250 has been succesfully patched for decryption.\e[0m"
 elif [[ -f $fsqcom ]]
 then
     fstabOneExt="$fsqcom"
     start
-    echo -e "\e[1;31m fstab.qcom has been succesfully patched for decryption.\e[0m"
+    echo -e "\e[1;32m fstab.qcom has been succesfully patched for decryption.\e[0m"
 else
-    echo -e "\e[1;33m Vendor patch for decryption has failed.\e[0m"
+    echo -e "\e[1;31m Vendor patch for decryption has failed.\e[0m"
 fi
 exit 0

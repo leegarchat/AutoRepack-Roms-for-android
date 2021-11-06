@@ -1,2 +1,3 @@
-rm -rf "output" && mkdir "output" && mkdir "output/boot" && mkdir "output/firmware-update"
+find output -maxdepth 5 -type f -delete
 rm -rf "extracted" && mkdir "extracted"
+rm -rf "tmp" && mkdir "tmp"

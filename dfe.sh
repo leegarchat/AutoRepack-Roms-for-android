@@ -1,8 +1,8 @@
 #!/bin/sh
 path=$1
 
-fsqcom=$path"etc/fstab.qcom"
-fssm8250=$path"etc/fstab.sm8250"
+fsqcom=''$path'etc/fstab.qcom'
+fssm8250=''$path'etc/fstab.sm8250'
 
 start(){
     sed -i 's|,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized+wrappedkey_v0||' $fstabOneExt
@@ -16,20 +16,17 @@ start(){
     sed -i 's|,wrappedkey||' $fstabOneExt 
 }
 
-if [ -f $fsqcom ] && [ -f $fssm8250 ]
-then
+if [ -f $fsqcom ] && [ -f $fssm8250 ]; then
     fstabOneExt="$fsqcom"
     start
     fstabOneExt="$fssm8250"
     start
     echo -e "\e[1;32m fstab.qcom and fstab.sm8250 have been succesfully patched for decryption.\e[0m"
-elif [[ -f $fssm8250 ]]
-then
+elif [[ -f $fssm8250 ]]; then
     fstabOneExt="$fssm8250"
     start
     echo -e "\e[1;32m fstab.sm8250 has been succesfully patched for decryption.\e[0m"
-elif [[ -f $fsqcom ]]
-then
+elif [[ -f $fsqcom ]]; then
     fstabOneExt="$fsqcom"
     start
     echo -e "\e[1;32m fstab.qcom has been succesfully patched for decryption.\e[0m"

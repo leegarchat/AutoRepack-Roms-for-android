@@ -40,6 +40,7 @@ convert_img(){
             sed -i 's|.img||' ''$OUT'/dynamic_partitions_op_list'
             img2simg ''$EXTRACTED''$file'' ''$OUT'/'$file'' 4096
             echo -e "\e[1;32m${file} successfully converted.\e[0m"
+<<<<<<< HEAD
             continue
         fi
     done
@@ -75,11 +76,57 @@ move_img(){
             echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
             continue
         else
+=======
+            continue
+        fi
+    done
+}    
+add_scrip_info(){
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("                         ");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("     --  '$1'        ");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("     --  '$2'        ");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("     --  REPACK        ");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("                         ");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
+}           
+move_img(){
+    for file in $(ls -1 extracted/*.img | xargs -n1 basename)  
+    do
+        if ! case "$file" in ($2.img|$3.img|$4.img|$5.img|$6.img|$7.img|$8.img|$9.img|$10.img|$11.img|$12.img|$13.img|$14.img|$15.img|$16.img|$18.img|$19.img|$20.img) false; esac; then
+            if [ -f extracted/$file ]; then
+            cp extracted/$file ''$OUT'/'$1/''
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_a");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._a|_a|' ''$OUT'/META-INF/com/google/android/updater-script'
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
+            continue 
+            else
+>>>>>>> alpha
             cp 'files/'$1'/'$file'' ''$OUT'/'$1'/'$file''
             echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_a");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._a|_a|' ''$OUT'/META-INF/com/google/android/updater-script'
             echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
             continue
+            fi
         fi
+<<<<<<< HEAD
+=======
+        if ! case "$file" in ($2.img|$3.img|$4.img|$5.img|$6.img|$7.img|$8.img|$9.img|$10.img|$11.img|$12.img|$13.img|$14.img|$15.img|$16.img|$18.img|$19.img|$20.img) true; esac; then
+            if [ -f extracted/$file ]; then
+            cp extracted/$file ''$OUT'/'$1/''
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_a");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._a|_a|' ''$OUT'/META-INF/com/google/android/updater-script'
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
+            continue 
+            else
+            cp 'files/'$1'/'$file'' ''$OUT'/'$1'/'$file''
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_a");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._a|_a|' ''$OUT'/META-INF/com/google/android/updater-script'
+            echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
+            continue
+            fi
+        fi
+>>>>>>> alpha
     done
 }
 convert_img_dat(){
@@ -110,7 +157,11 @@ zip_create(){
 addscrip_dat(){
     echo 'assert(update_dynamic_partitions(package_extract_file("dynamic_partitions_op_list")));' >> $OUT/META-INF/com/google/android/updater-script
     echo 'ui_print("Flashing partition...");' >> $OUT/META-INF/com/google/android/updater-script  
+<<<<<<< HEAD
     for file in $(ls -1 ''$OUT'/'*.new.dat*''' | xargs -n1 basename)  
+=======
+    for file in $(ls -1 $OUT/*.new.dat* | xargs -n1 basename)  
+>>>>>>> alpha
     do
         if [ -f ''$OUT'/'$file'' ]; then
                 echo 'ui_print("Flashing '$file' partition...");' >> ''$OUT'/META-INF/com/google/android/updater-script'
@@ -121,7 +172,11 @@ addscrip_dat(){
                 continue
         fi
     done
+<<<<<<< HEAD
     if [ '$file' != 'odm.new.dat' ] || [ '$file' != 'odm.new.dat.br' ]; then
+=======
+    if [ '$file' -ne 'odm.new.dat' ] || [ '$file' -ne 'odm.new.dat.br' ]; then
+>>>>>>> alpha
     sed -i '/add odm_a qti_dynamic_partitions_a/d' ''$OUT'/dynamic_partitions_op_list'
     sed -i '/add odm_b qti_dynamic_partitions_b/d' ''$OUT'/dynamic_partitions_op_list'
     fi
@@ -225,8 +280,12 @@ quick_miui(){
     OUT="output/miui/step1" && add_scrip_info 'NameRom' 'DFE,MAGISK,TWRP - include' && OUT="output/miui/step2_dfe" && add_scrip_info 'NameRom' 'DFE,MAGISK,TWRP - include'
     move_img firmware-update xbl_config cmnlib64 cmnlib bluetooth abl aop imagefv keymaster modem qupfw tz uefisecapp xbl dsp devcfg featenabler hyp
     move_img boot vendor_boot vbmeta vbmeta_system dtbo 
+<<<<<<< HEAD
     
     path=$(realpath $OUT) && sh twrp-magisk.sh $patch $twrp $method 
+=======
+    sh twrp-magisk.sh $OUT $twrp $method 
+>>>>>>> alpha
     addscrip_dat && OUT="output/miui/step1" && addscrip_dat
     #sh ziping $1 $2   
 }

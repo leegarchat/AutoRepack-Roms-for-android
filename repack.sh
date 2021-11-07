@@ -6,6 +6,8 @@ dfe=""
 method=""
 
 unpack_payload(){
+    rm -rf extracted/*
+    rm -rf output/*
     echo -e "\e[1;32m -------------------------------------------------------------\e[0m"
     echo "\e[1;32m              Extracting images from payload.bin\e[0m"
     echo -e "\e[1;32m -------------------------------------------------------------\e[0m"
@@ -31,18 +33,24 @@ filezise(){
 convert_img(){
     for file in $(ls -1 extracted/*.img | xargs -n1 basename)  
     do
-        if ! case "$file" in ($1.img|$2.img|$3.img|$4.img|$5.img|$6.img|$7.img|$8.img|$9.img|$10.img|$11.img|$12.img|$13.img|$14.img|$15.img|$16.img|$18.img|$19.img|$20.img) false; esac; then
+        if ! case "$file" in ($2.img|$3.img|$4.img|$5.img|$6.img|$7.img) false; esac; then
             echo -e "\e[1;32m-------------------------------------------------------------\e[0m"
             echo "\e[1;34mConverting ${file}...\e[0m"
             echo -e "\e[1;32m-------------------------------------------------------------\e[0m"
             FILESIZE=$(stat -c%s extracted/$file)
-            echo 'resize '$file'_a '$FILESIZE'' >> ''$OUT'/dynamic_partitions_op_list'
-            sed -i 's|.img||' ''$OUT'/dynamic_partitions_op_list'
-            img2simg ''$EXTRACTED''$file'' ''$OUT'/'$file'' 4096
+            echo 'resize '$file'_a '$FILESIZE'' >> ''$1'/dynamic_partitions_op_list'
+            sed -i 's|.img||' ''$1'/dynamic_partitions_op_list'
+            img2simg ''$EXTRACTED''$file'' ''$1'/'$file'' 4096
             echo -e "\e[1;32m${file} successfully converted.\e[0m"
             continue
         fi
     done
+        if [ -f  $1/odm.new.dat ] || [ -f $1/odm.new.dat.br ]; then
+        echo 'fine'
+        else
+        sed -i '/add odm_a qti_dynamic_partitions_a/d' ''$1'/dynamic_partitions_op_list'
+        sed -i '/add odm_b qti_dynamic_partitions_b/d' ''$1'/dynamic_partitions_op_list'
+        fi
 }    
 add_scrip_info(){
     echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
@@ -58,13 +66,15 @@ add_scrip_info(){
     echo 'ui_print("*****************************");' >> $OUT/META-INF/com/google/android/updater-script
 }           
 move_img(){
-    img_fw_add=($2 $3 $4 $5 $6 $7 $8 $9)
+    img_fw_add=($2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} ${15} ${16} ${17} ${18} ${19} ${20})
     nam=0
     for file in $(ls -1 extracted/*.img | xargs -n1 basename)  
     do
-        if ! case "$file" in ($2.img|$3.img|$4.img|$5.img|$6.img|$7.img|$8.img|$9.img) false; esac; then
-            img_del_arr[$nam]=$file
-            nam=$( expr nam + 1)
+        if ! case "$file" in ($2.img|$3.img|$4.img|$5.img|$6.img|$7.img|$8.img|$9.img|${10}.img|${11}.img|${12}.img|${13}.img|${14}.img|${15}.img|${16}.img|${17}.img|${18}.img|${19}.img|${20}.img) false; esac; then
+            fileimg=$file
+            filenonimg=${fileimg::${#fileimg}-4}
+            img_del_arr[$nam]=$filenonimg
+            nam=$( expr $nam + 1)
             cp extracted/$file ''$OUT'/'$1/''
             echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_a");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._a|_a|' ''$OUT'/META-INF/com/google/android/updater-script'
             echo 'package_extract_file("'$1'/'$file'", "/dev/block/bootdevice/by-name/'$file'_b");' >> $OUT/META-INF/com/google/android/updater-script && sed -i 's|img._b|_b|' ''$OUT'/META-INF/com/google/android/updater-script'
@@ -73,15 +83,16 @@ move_img(){
     done
     for del in ${img_del_arr[@]}
     do
-        img_fw_add=("${img_fw_add[@]/$del}")
+        img_fw_add=('${img_fw_add[@]/'$del'}')
     done
-    echo ${img_fw_add[*]}
     for add in ${img_fw_add[@]}
     do
-    echo $add
-            cp 'files/'$1'/'$add'.img' ''$OUT'/'$1'/'$add'.img'
-            echo 'package_extract_file("'$1'/'$add'.img", "/dev/block/bootdevice/by-name/'$add'_a");' >> $OUT/META-INF/com/google/android/updater-script
-            echo 'package_extract_file("'$1'/'$add'.img", "/dev/block/bootdevice/by-name/'$add'_b");' >> $OUT/META-INF/com/google/android/updater-script
+        if [ -f 'files/firmware-update/'$add'.img' ]; then
+        cp 'files/firmware-update/'$add'.img' ''$OUT'/'$1'/'$add'.img'
+        echo 'package_extract_file("'$1'/'$add'.img", "/dev/block/bootdevice/by-name/'$add'_a");' >> $OUT/META-INF/com/google/android/updater-script
+        echo 'package_extract_file("'$1'/'$add'.img", "/dev/block/bootdevice/by-name/'$add'_b");' >> $OUT/META-INF/com/google/android/updater-script
+        continue
+        fi
     done
 }
 convert_img_dat(){
@@ -94,7 +105,19 @@ convert_img_dat(){
         rm ''$1'/'$sparse''
     done
 }
-
+addscrip_dat(){
+    echo 'assert(update_dynamic_partitions(package_extract_file("dynamic_partitions_op_list")));' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'ui_print("Flashing partition...");' >> $OUT/META-INF/com/google/android/updater-script  
+    for file in $(ls -1 $OUT/*.new.* | xargs -n1 basename)  
+    do
+        echo 'ui_print("Flashing '$file' partition...");' >> ''$OUT'/META-INF/com/google/android/updater-script'
+        echo 'show_progress(0.100000, 0);' >> ''$OUT'/META-INF/com/google/android/updater-script'
+        echo 'block_image_update(map_partition("'$file'_a"), package_extract_file("'$file'.transfer.list"), "'$file'", "'$file'.patch.dat");' >> ''$OUT'/META-INF/com/google/android/updater-script'
+        sed -i 's|.new.dat partition| partition|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat_a|_a|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.transfer.list|.transfer.list|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.patch.dat|.patch.dat|' ''$OUT'/META-INF/com/google/android/updater-script'
+        sed -i 's|.new.dat.br partition| partition|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br_a|_a|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br.transfer.list|.transfer.list|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br.patch.dat|.patch.dat|' ''$OUT'/META-INF/com/google/android/updater-script'
+        continue
+    done
+}
 convert_dat_br(){    
     for dat in $(ls $OUT/*.new.dat) 
     do
@@ -105,33 +128,16 @@ convert_dat_br(){
     done
 }
 
-zip_create(){
-    zip -1 -r $name_zip *
-}
 
-addscrip_dat(){
-    echo 'assert(update_dynamic_partitions(package_extract_file("dynamic_partitions_op_list")));' >> $OUT/META-INF/com/google/android/updater-script
-    echo 'ui_print("Flashing partition...");' >> $OUT/META-INF/com/google/android/updater-script  
-    for file in $(ls -1 $OUT/*.new.dat* | xargs -n1 basename)  
-    do
-        if [ $file != odm.new.dat ] || [ $file != odm.new.dat.br ]; then
-        sed -i '/add odm_a qti_dynamic_partitions_a/d' ''$OUT'/dynamic_partitions_op_list'
-        sed -i '/add odm_b qti_dynamic_partitions_b/d' ''$OUT'/dynamic_partitions_op_list'
-        fi
-        echo 'ui_print("Flashing '$file' partition...");' >> ''$OUT'/META-INF/com/google/android/updater-script'
-        echo 'show_progress(0.100000, 0);' >> ''$OUT'/META-INF/com/google/android/updater-script'
-        echo 'block_image_update(map_partition("'$file'_a"), package_extract_file("'$file'.transfer.list"), "'$file'", "'$file'.patch.dat");' >> ''$OUT'/META-INF/com/google/android/updater-script'
-        sed -i 's|.new.dat partition| partition|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat_a|_a|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.transfer.list|.transfer.list|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.patch.dat|.patch.dat|' ''$OUT'/META-INF/com/google/android/updater-script'
-        sed -i 's|.new.dat.br partition| partition|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br_a|_a|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br.transfer.list|.transfer.list|' ''$OUT'/META-INF/com/google/android/updater-script' && sed -i 's|.new.dat.br.patch.dat|.patch.dat|' ''$OUT'/META-INF/com/google/android/updater-script'
-        continue
-    done
+lastscript_add(){
+    echo 'package_extract_file("'boot'/'boot'.img", "/dev/block/bootdevice/by-name/'boot'_a");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'package_extract_file("'boot'/'boot'.img", "/dev/block/bootdevice/by-name/'boot'_b");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'run_program("/system/bin/bootctl", "set-active-boot-slot", "0");' >> $OUT/META-INF/com/google/android/updater-script
+    echo 'set_progress(1.000000);' >> $OUT/META-INF/com/google/android/updater-script
 }
-ziping(){
-    cd 
-}
-
 addqti(){
     cp files/update-binary $OUT/META-INF/com/google/android/
+    rm $OUT/META-INF/com/google/android/updater-script
     rm ''$OUT'/dynamic_partitions_op_list'
     if [ $1 == AOSP ] || [ $1 == MIUI ]; then
         echo "remove_all_groups" >> $OUT/dynamic_partitions_op_list
@@ -155,30 +161,56 @@ addqti(){
         echo "add vendor_b qti_dynamic_partitions_b" >> ./$OUT/dynamic_partitions_op_list
     fi
 }
+start_aosp(){
+    twrp=$1
+    method=$2
+    DFE=$3
+    OUT="output/aosp"
+    unpack_payload
+    mkdir output mkdir output/aosp && mkdir output/aosp/META-INF && mkdir output/aosp/META-INF/com && mkdir output/aosp/META-INF/com/google && mkdir output/aosp/META-INF/com/google/android && mkdir output/aosp/boot && mkdir output/aosp/firmware-update
+    addqti AOSP
+    convert_img $OUT odm system system_ext product
+    if [ $DFE == dfe_true ]; then
+        vendor_dfe $OUT
+        else
+        convert_img $OUT vendor
+    fi
+    convert_img_dat $OUT
+    add_scrip_info 'NameRom' '#### - include'
+    move_img firmware-update xbl_config cmnlib64 cmnlib bluetooth abl aop imagefv keymaster modem qupfw tz uefisecapp xbl dsp devcfg featenabler hyp
+    addscrip_dat
+    move_img boot vendor_boot vbmeta vbmeta_system dtbo
+    path=$(realpath './'$OUT'/'boot/boot.img'') && sh twrp-magisk.sh $path $twrp $method
+    lastscript_add
+    #size=$1, OUT=$2, path_OUT=$3, name=$4:
+    sh ziping.sh 3 $OUT '/sdcard' 'aosprom_'$method'_'$DFE''
+}
 
 quick_aosp(){
     clear
     echo "\e[1;31mWhat ROM are you repacking?:"
-	echo "\e[1;32m    1) Other"
-	echo "\e[1;32m    2) Hentai OS"
-	echo "\e[1;32m    3) Return menu"
-	echo "\e[1;32m    4) Exit"
+	echo "\e[1;32m 1) Other"
+	echo "\e[1;32m 2) Hentai OS"
+	echo "\e[1;32m 3) Return menu"
+	echo "\e[1;32m 4) Exit"
     echo -n "\e[1;31mMake your pick: \e[1;32m"
     read SEL
     if [ "$SEL" == "1" ]; then
         clear
         echo "\e[1;31mWhat TWRP are you have use?:"
-        echo "\e[1;32m    1) Nebrassy"
-        echo "\e[1;32m    2) Vashy"
-        echo "\e[1;32m    3) Return menu"
-        echo "\e[1;32m    4) Exit"
+        echo "\e[1;32m 1) Nebrassy"
+        echo "\e[1;32m 2) Vashy"
+        echo "\e[1;32m 3) Return menu"
+        echo "\e[1;32m 4) Exit"
         echo -n "\e[1;31mMake your pick: \e[1;32m"
         read SEL
         clear
         if [ "$SEL" == "1" ]; then
             twrp="files/nebrassy.cpio"
+            start_aosp twrp 'twrp-root' dfe_true
         elif [ "$SEL" == "2" ]; then
             twrp="files/vashi.cpio"
+            start_aosp twrp 'twrp-root' dfe_true
         elif [ "$SEL" == "3" ]; then
             start_menu
         elif [ "$SEL" == "4" ]; then
@@ -188,6 +220,7 @@ quick_aosp(){
         fi
     elif [ "$SEL" == "2" ]; then
         path_twrp="files/vashi.cpio"
+        start_aosp
     elif [ "$SEL" == "3" ]; then
         start_menu
     elif [ "$SEL" == "4" ]; then
@@ -195,39 +228,34 @@ quick_aosp(){
     else
         quick_aosp
     fi
-    mkdir output/aosp && mkdir output/aosp/META-INF && mkdir output/aosp/META-INF/com && mkdir output/aosp/META-INF/com/google && mkdir output/aosp/META-INF/com/google/android && mkdir output/aosp/boot && mkdir output/aosp/firmware-update/
-    OUT="output/aosp"
-    #unpack_payload
-    addqti AOSP
-    convert_img odm system system_ext product
-    vendor_dfe $OUT && dfe="DFE"
-    convert_img_dat
-    add_scrip_info 'NameRom' 'DFE,MAGISK,TWRP - include'
-    move_img firmware-update xbl_config cmnlib64 cmnlib bluetooth abl aop imagefv keymaster modem qupfw tz uefisecapp xbl dsp devcfg featenabler hyp
-    move_img boot vendor_boot vbmeta vbmeta_system dtbo
-    sh twrp-magisk.sh $OUT $twrp $method 
-    addscrip_dat
-    #sh ziping $1 $2 
 }
+
 quick_miui(){
+    twrp=$1
+    method=$2
+    DFE=$3
+    unpack_payload
     mkdir output/miui && mkdir output/miui/step1 && mkdir output/miui/step1/META-INF && mkdir output/miui/step1/META-INF/com && mkdir output/miui/step1/META-INF/com/google && mkdir output/miui/step1/META-INF/com/google/android
     mkdir output/miui && mkdir output/miui/step2_dfe && mkdir output/miui/step2_dfe/META-INF && mkdir output/miui/step2_dfe/META-INF/com && mkdir output/miui/step2_dfe/META-INF/com/google && mkdir output/miui/step2_dfe/META-INF/com/google/android && mkdir output/miui/step2_dfe/firmware-update && mkdir output/miui/step2_dfe/boot
-    OUT="output/miui/step1"
-    #unpack_payload
     OUT="output/miui/step1" && addqti MIUI
     OUT="output/miui/step2_dfe" && addqti MIUI2
-    #OUT="output/miui/step1" && convert_img odm system system_ext product
-    #vendor_dfe 'output/miui/step2_dfe' && dfe="DFE"
-    #convert_img_dat 'output/miui/step1' && convert_img_dat 'output/miui/step2_dfe'
-    #convert_dat_br 3 && OUT="output/miui/step2_dfe" && convert_dat_br 3
-    OUT="output/miui/step1" && add_scrip_info 'NameRom' 'DFE,MAGISK,TWRP - include' && OUT="output/miui/step2_dfe" && add_scrip_info 'NameRom' 'DFE,MAGISK,TWRP - include'
-    move_img firmware-update xbl_config cmnlib64 cmnlib bluetooth abl aop 
-    move_img firmware-update modem qupfw tz uefisecapp xbl dsp devcfg featenabler keymaster 
-    move_img firmware-update hyp dsp devcfg featenabler imagefv 
-    move_img boot vendor_boot vbmeta vbmeta_system dtbo 
-    sh twrp-magisk.sh $OUT $twrp $method 
+    OUT="output/miui/step1" && convert_img $OUT odm system system_ext product
+    if [ $DFE == dfe_true ]; then
+        vendor_dfe 'output/miui/step2_dfe' && dfe="DFE"
+        else
+        convert_img 'output/miui/step2_dfe' vendor
+    fi
+    convert_img_dat 'output/miui/step1' && convert_img_dat 'output/miui/step2_dfe'
+    convert_dat_br 3 && OUT="output/miui/step2_dfe" && convert_dat_br 3
+    OUT="output/miui/step1" && add_scrip_info 'miui' '#### - include' && OUT="output/miui/step2_dfe" && add_scrip_info 'miui' 'DFE,MAGISK,TWRP - include'
+    move_img firmware-update xbl_config cmnlib64 cmnlib bluetooth abl aop modem qupfw tz uefisecapp xbl dsp devcfg featenabler keymaster hyp imagefv 
     addscrip_dat && OUT="output/miui/step1" && addscrip_dat
-    #sh ziping $1 $2   
+    move_img boot vendor_boot vbmeta vbmeta_system dtbo 
+    path=$(realpath './'$OUT'/'boot/boot.img'') && sh twrp-magisk.sh $path $twrp $method
+    lastscript_add 
+    #size=$1, OUT=$2, path_OUT=$3, name=$4:
+    sh ziping.sh 3 'output/miui/step1' '/sdcard' 'step1_miuirom_'$method'_'$DFE''
+    sh ziping.sh 3 'output/miui/step2_dfe' '/sdcard' 'step2_miuirom_'$method'_'$DFE''
 }
 storege_path(){
     clear
@@ -241,19 +269,19 @@ detal_menu(){
     clear
     rom_type=""
 	echo "\e[1;31mWhat ROM are you repacking?:"
-	echo "\e[1;32m    1) MIUI"
-	echo "\e[1;32m    2) AOSP"
-	echo "\e[1;32m    3) PORT (soon)"
-	echo "\e[1;32m    4) Return menu"
-	echo "\e[1;32m    5) Exit"
+	echo "\e[1;32m 1) MIUI"
+	echo "\e[1;32m 2) AOSP"
+	echo "\e[1;32m 3) PORT (soon)"
+	echo "\e[1;32m 4) Return menu"
+	echo "\e[1;32m 5) Exit"
     echo -n "\e[1;31mMake your pick: \e[1;32m"
     read SEL
     if [ "$SEL" == "1" ]; then
         rom_type="miui"
-        images_menu
+        detal_menu2
         elif [ "$SEL" == "2" ]; then
         rom_type="aosp"
-        images_menu
+        detal_menu2
         elif [ "$SEL" == "3" ]; then
         detal_menu
         elif [ "$SEL" == "4" ]; then
@@ -263,6 +291,86 @@ detal_menu(){
         else
         detal_menu
     fi
+}
+detal_menu2(){
+clear
+	echo "\e[1;31mWhat ROM are you repacking?:"
+	echo "\e[1;32m 1) DFE+TWRP+MAGISK"
+	echo "\e[1;32m 2) DFE+MAGISK"
+	echo "\e[1;32m 3) DFE+TWRP"
+    echo "\e[1;32m 4) DFE only"
+    echo "\e[1;32m 5) TWRP+MAGISK"
+    echo "\e[1;32m 6) TWRP only"
+    echo "\e[1;32m 7) MAGISK only"
+    echo "\e[1;32m 8) Original repack"
+	echo "\e[1;32m 9) Return menu"
+	echo "\e[1;32m 10) Exit"
+    echo -n "\e[1;31mMake your pick: \e[1;32m"
+    read SEL
+    if [ "$SEL" == "1" ]; then
+        DFE=dfe_true
+        method='twrp-root'
+        detal_menu3
+        elif [ "$SEL" == "2" ]; then
+        DFE=dfe_true
+        method='root'
+        images_menu
+        elif [ "$SEL" == "3" ]; then
+        DFE=dfe_true
+        method='twrp'
+        detal_menu3
+        elif [ "$SEL" == "4" ]; then
+        DFE=dfe_true
+        method='original'
+        images_menu
+        elif [ "$SEL" == "5" ]; then
+        DFE=dfe_false
+        method='twrp-root'
+        detal_menu3
+        elif [ "$SEL" == "6" ]; then
+        DFE=dfe_false
+        method='twrp'
+        detal_menu3        
+        elif [ "$SEL" == "7" ]; then
+        DFE=dfe_false
+        method='root'
+        images_menu
+        elif [ "$SEL" == "8" ]; then
+        DFE=dfe_false
+        method='original'
+        images_menu
+        elif [ "$SEL" == "9" ]; then
+        images_menu
+        elif [ "$SEL" == "10" ]; then
+        exit 0
+        else
+        detal_menu2
+    fi
+}
+detal_menu3(){
+        clear
+        echo "\e[1;31mWhat TWRP are you have use?:"
+        echo "\e[1;32m 1) Nebrassy"
+        echo "\e[1;32m 2) Vashy"
+        echo "\e[1;32m 3) Return menu"
+        echo "\e[1;32m 4) Exit"
+        echo -n "\e[1;31mMake your pick: \e[1;32m"
+        read SEL
+        if [ "$SEL" == "1" ]; then     
+        twrp="files/nebrassy.cpio"
+        images_menu
+        elif [ "$SEL" == "2" ]; then 
+        twrp="files/vashi.cpio"
+        images_menu
+        elif [ "$SEL" == "3" ]; then
+        detal_menu2
+        elif [ "$SEL" == "4" ]; then
+        start_menu
+        elif [ "$SEL" == "5" ]; then
+        exit 0
+        else
+        detal_menu
+        fi
 }
 images_menu(){
     clear
@@ -275,8 +383,13 @@ images_menu(){
 	echo -n "\e[1;31mMake your pick: \e[1;32m"
     read SEL
     if [ "$SEL" == "1" ]; then
-        method='twrp-root'
-        quick_aosp
+        if [ $rom_type == miui ]; then
+        quick_miui
+        elif [ $rom_type == aosp ]; then
+        start_aosp $twrp $method $DFE
+        else
+        echo ""
+        fi
         elif [ "$SEL" == "2" ]; then 
         images_menu
         elif [ "$SEL" == "3" ]; then
@@ -303,7 +416,7 @@ start_menu(){
         elif [ "$SEL" == "2" ]; then
         twrp="files/nebrassy.cpio"
         method="twrp-root"
-        quick_miui
+        quick_miui $twrp $method dfe_true
         elif [ "$SEL" == "3" ]; then
         detal_menu
         elif [ "$SEL" == "4" ]; then
